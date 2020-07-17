@@ -1,0 +1,38 @@
+%% DESCRIPTION 
+%  My feeble attempts at scripting in MATLAB. As a a useful test case I decided to go with
+%  Dimitry's phake phase plate devonvolution script which you can download from his github page
+%  (https://github.com/dtegunov/tom_deconv). You will also need to the tom_toolbox which is also
+%  available on his github page (https://github.com/dtegunov/tom). Git clone both these tools in a single
+%  folder for sanity.
+%  Download this script and store in your favourite place.
+%  The script is a bit dumb as I still havent figured out some things, but in its present form to make it
+%  work, create a folder e.g. denconv and sym link the mrc/rec files you would like to have deconvolved in it.
+%  Start matlab GUI in that directory. Then at the MATLAB cmd prompt type <run /path/to/this/script/dimitryFilter.m> without the '<','>'.
+%  If all goes to plan, then Bob aught to be your Uncle, be sure to introduce him to all of us ;) :D.
+
+%%  Set env
+addpath(genpath('/path/to/dimitry's_software/on/your/local/drive'))
+
+%% GOOIEEEE
+prompt = {'Enter pixel size:','Enter approximate defocus value:'};
+dlgtitle = 'Input';
+dims = [1 35];
+definput = {'1.327','1.75'};
+answer = inputdlg(prompt,dlgtitle,dims,definput)
+
+% Store user inputs
+angpix=str2num(answer{1});
+defocus=str2num(answer{2});
+recs=[dir('*.mrc');dir('*.rec')];
+
+%% Deconvolve it baby!!!
+for i = 1:numel(recs)
+    F=fullfile(recs(i).name);
+    tag='_deconv.mrc';
+    naav=strcat(F(1:end-4),tag);
+    mytomo=tom_mrcread(F);
+    mytomo=mytomo.Value;
+    fprintf('Deconvolving tomogram %s.\n',F)
+    deconv=tom_deconv(mytomo, angpix,defocus,0.8,0.8,0,false,0);
+    tom_mrcwrite(deconv, 'name', naav, 'style', 'classic', 'pixelsize', angpix);
+end
